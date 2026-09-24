@@ -23,8 +23,6 @@ import java.io.IOException;
 
 @Service
 public class JwtFilter extends OncePerRequestFilter {
-
-
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService;
     private final AuthRepository authRepository;
