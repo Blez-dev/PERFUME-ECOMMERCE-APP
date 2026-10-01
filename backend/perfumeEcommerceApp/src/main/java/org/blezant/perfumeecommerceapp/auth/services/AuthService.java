@@ -34,7 +34,7 @@ import java.util.UUID;
 public class AuthService {
 
 
-    @Value("${spring.mail.username}")
+    @Value("${resend.mail}")
     private String appMail;
 
     private final AuthRepository authRepository;
@@ -45,12 +45,12 @@ public class AuthService {
     RefreshTokenService refreshTokenService;
     RefreshTokenRepository refreshTokenRepository;
     CustomUserDetailsService customUserDetailsService;
-    JavaMailSender javaMailSender;
+
     RabbitProducer rabbitProducer;
 
 
 
-    AuthService(AuthRepository authRepository, VerificationTokenService verificationTokenService, VerificationRepository verificationRepository, AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, CustomUserDetailsService customUserDetailsService, JavaMailSender javaMailSender,RabbitProducer rabbitProducer) {
+    AuthService(AuthRepository authRepository, VerificationTokenService verificationTokenService, VerificationRepository verificationRepository, AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, CustomUserDetailsService customUserDetailsService, RabbitProducer rabbitProducer) {
         this.authRepository = authRepository;
         this.verificationTokenService = verificationTokenService;
         this.verificationRepository = verificationRepository;
@@ -59,7 +59,7 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
         this.refreshTokenRepository = refreshTokenRepository;
         this.customUserDetailsService = customUserDetailsService;
-        this.javaMailSender = javaMailSender;
+
         this.rabbitProducer=rabbitProducer;
     }
 

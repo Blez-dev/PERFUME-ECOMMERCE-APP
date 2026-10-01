@@ -2,12 +2,14 @@
   <configuration default="false" name="PerfumeApp" type="Application" factoryName="Application">
     <envs>
       <env name="API_KEY" value="HyD/jce1VAlp8Ul90iuZclx26baP7NxLyPBLxX2hR6s=" />
+      <env name="BROKER_ADDRESS" value="amqps://nrsdztyu:xi75nqnc_v4FSe6vziZk0TOkicaCPnfg@dog.lmq.cloudamqp.com/nrsdztyu" />
       <env name="DB_NAME" value="jdbc:postgresql://dpg-dapkefjbc2fs73b25ht0-a.oregon-postgres.render.com/perf_0457" />
       <env name="DB_PASSWORD" value="s6LEWcmeH0za0ZwP9PbfQafAsoUF4Pg3" />
-      <env name="MAIL" value="blessingadu97@gmail.com" />
       <env name="MAIL_PASSWORD" value="wujlfuefscahehwh" />
       <env name="MAIL_PORT" value="465" />
-      <env name="BROKER_ADDRESS" value="amqps://nrsdztyu:xi75nqnc_v4FSe6vziZk0TOkicaCPnfg@dog.lmq.cloudamqp.com/nrsdztyu" />
+      <env name="RESEND_API_KEY" value="re_9ZVYgxwr_7vja3YpAeTmsAtogRxXB5Dyy" />
+      <env name="RESEND_MAIL" value="onboarding@resend.dev" />
+      <env name="MAIL" value="onboarding@resend.dev" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="org.blezant.perfumeecommerceapp.PerfumeEcommerceAppApplication" />
     <module name="perfumeEcommerceApp" />

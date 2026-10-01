@@ -28,10 +28,10 @@ import java.util.UUID;
 @Service
 public class VerificationTokenService {
 
-    private final JavaMailSender mailSender;
+
     private final AuthRepository authRepository;
 
-    @Value("${spring.mail.username}")
+    @Value("${resend.mail}")
     private String appMail;
 
 
@@ -42,9 +42,9 @@ public class VerificationTokenService {
 
     private final VerificationRepository verificationRepository;
 
-    VerificationTokenService(VerificationRepository verificationRepository,JavaMailSender javaMailSender,AuthRepository authRepository,RabbitProducer rabbitProducer){
+    VerificationTokenService(VerificationRepository verificationRepository,AuthRepository authRepository,RabbitProducer rabbitProducer){
         this.verificationRepository=verificationRepository;
-        this.mailSender=javaMailSender;
+
         this.authRepository=authRepository;
         this.rabbitProducer=rabbitProducer;
 
