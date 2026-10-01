@@ -26,18 +26,10 @@ public class RabbitConsumer {
 
     }
 
+
     @RabbitListener(queues = "email.notification.queue")
     public void consumeMailMessage(BrokerMailMessage brokerMailMessage){
-//        //create a mail message object
-//        SimpleMailMessage mailMessage= new SimpleMailMessage();
-//        mailMessage.setFrom(brokerMailMessage.getFromMail());
-//        mailMessage.setSentDate(new Date());
-//        mailMessage.setSubject("Email verification Token");
-//        mailMessage.setText(
-//                brokerMailMessage.getMessage()
-//        );
-//        mailMessage.setTo(brokerMailMessage.getToMail());
-//        javaMailSender.send(mailMessage);
+
 
 
         //create Resend Object
