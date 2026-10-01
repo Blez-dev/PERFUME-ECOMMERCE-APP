@@ -4,10 +4,14 @@ package org.blezant.perfumeecommerceapp.auth.services;
 import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
 import org.blezant.perfumeecommerceapp.auth.entities.VerificationTokenEntity;
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomBadRequestException;
+import org.blezant.perfumeecommerceapp.auth.models.BrokerMailMessage;
 import org.blezant.perfumeecommerceapp.auth.models.VerifyRegisterRequestDto;
 import org.blezant.perfumeecommerceapp.auth.models.VerifyRegisterResponseDto;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
 import org.blezant.perfumeecommerceapp.auth.repositories.VerificationRepository;
+import org.blezant.perfumeecommerceapp.rabbitMQ.producers.RabbitProducer;
+import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -32,12 +36,18 @@ public class VerificationTokenService {
 
 
 
+    private  final RabbitProducer rabbitProducer;
+
+
+
     private final VerificationRepository verificationRepository;
 
-    VerificationTokenService(VerificationRepository verificationRepository,JavaMailSender javaMailSender,AuthRepository authRepository){
+    VerificationTokenService(VerificationRepository verificationRepository,JavaMailSender javaMailSender,AuthRepository authRepository,RabbitProducer rabbitProducer){
         this.verificationRepository=verificationRepository;
         this.mailSender=javaMailSender;
         this.authRepository=authRepository;
+        this.rabbitProducer=rabbitProducer;
+
     }
     public  boolean verifyToken(String verificationToken,String otp,String email){
 
@@ -60,7 +70,7 @@ public class VerificationTokenService {
        //generate verification token
         String verificationToken = storeToken(data, hashedToken);
         //send to user's email
-        sendMail(data, randomNumber);
+        sendMailToBroker(data, randomNumber);
         //return response
         VerifyRegisterResponseDto verifyRegisterResponseDto= new VerifyRegisterResponseDto();
         verifyRegisterResponseDto.setEmail(data.getEmail());
@@ -103,23 +113,29 @@ public class VerificationTokenService {
         return verificationToken;
     }
 
-    public void sendMail(VerifyRegisterRequestDto data, String randomNumber) {
-        SimpleMailMessage mailMessage= new SimpleMailMessage();
-        mailMessage.setFrom(appMail);
-        mailMessage.setSentDate(new Date());
-        mailMessage.setSubject("Email verification Token");
-        mailMessage.setText(
-                "Email Verification\n\n" +
-                        "Hello,\n\n" +
-                        "Your email verification code is: " + randomNumber + "\n\n" +
-                        "Please enter this code to verify your email address and complete your registration.\n\n" +
-                        "This verification code will expire in 15 minutes. " +
-                        "For your security, please do not share this code with anyone.\n\n" +
-                        "If you did not request this verification code, you can safely ignore this email.\n\n" +
-                        "Thank you,\n" +
-                        "The Scentra Team"
-        );
-        mailMessage.setTo(data.getEmail());
-        mailSender.send(mailMessage);
+    public void sendMailToBroker(VerifyRegisterRequestDto data, String randomNumber) {
+        //send mail to broker
+        BrokerMailMessage brokerMailMessage= new BrokerMailMessage();
+        brokerMailMessage.setFromMail(appMail);
+        brokerMailMessage.setToMail(data.getEmail());
+        brokerMailMessage.setMessage( "Email Verification\n\n" +
+                "Hello,\n\n" +
+                "Your email verification code is: " + randomNumber + "\n\n" +
+                "Please enter this code to verify your email address and complete your registration.\n\n" +
+                "This verification code will expire in 15 minutes. " +
+                "For your security, please do not share this code with anyone.\n\n" +
+                "If you did not request this verification code, you can safely ignore this email.\n\n" +
+                "Thank you,\n" +
+                "The Scentra Team");
+        brokerMailMessage.setExchangeName("auth.exchange");
+        brokerMailMessage.setRoutingKey("email.notification");
+
+        rabbitProducer.sendMail(brokerMailMessage);
+
+
+
+
+
+
     }
 }

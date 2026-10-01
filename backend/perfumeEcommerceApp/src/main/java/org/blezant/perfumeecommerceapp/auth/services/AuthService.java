@@ -1,6 +1,5 @@
 package org.blezant.perfumeecommerceapp.auth.services;
 
-import jakarta.validation.Valid;
 import org.blezant.perfumeecommerceapp.auth.entities.RefreshTokenEntity;
 import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
 import org.blezant.perfumeecommerceapp.auth.entities.VerificationTokenEntity;
@@ -11,7 +10,7 @@ import org.blezant.perfumeecommerceapp.auth.repositories.RefreshTokenRepository;
 import org.blezant.perfumeecommerceapp.auth.repositories.VerificationRepository;
 import org.blezant.perfumeecommerceapp.jwt.services.JwtService;
 import org.blezant.perfumeecommerceapp.jwt.services.RefreshTokenService;
-import org.jspecify.annotations.NonNull;
+import org.blezant.perfumeecommerceapp.rabbitMQ.producers.RabbitProducer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -47,9 +46,11 @@ public class AuthService {
     RefreshTokenRepository refreshTokenRepository;
     CustomUserDetailsService customUserDetailsService;
     JavaMailSender javaMailSender;
+    RabbitProducer rabbitProducer;
 
 
-    AuthService(AuthRepository authRepository, VerificationTokenService verificationTokenService, VerificationRepository verificationRepository, AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, CustomUserDetailsService customUserDetailsService, JavaMailSender javaMailSender) {
+
+    AuthService(AuthRepository authRepository, VerificationTokenService verificationTokenService, VerificationRepository verificationRepository, AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, CustomUserDetailsService customUserDetailsService, JavaMailSender javaMailSender,RabbitProducer rabbitProducer) {
         this.authRepository = authRepository;
         this.verificationTokenService = verificationTokenService;
         this.verificationRepository = verificationRepository;
@@ -59,6 +60,7 @@ public class AuthService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.customUserDetailsService = customUserDetailsService;
         this.javaMailSender = javaMailSender;
+        this.rabbitProducer=rabbitProducer;
     }
 
     @Transactional
@@ -232,7 +234,7 @@ public class AuthService {
         //Hash and save otpcode
         hashAndSaveOtp(requestData, otpCode, vToken);
         //create simple mail message object and send to user's mail
-        sendOtp(requestData, otpCode);
+        sendMailToBroker(requestData, otpCode);
         //build response and send to user
         return responseData(requestData, vToken);
     }
@@ -260,21 +262,27 @@ public class AuthService {
         verificationRepository.save(vTokenEntity);
     }
 
-    private void sendOtp(ForgetPasswordVerifyRequestDto requestData, String otpCode) {
-        SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
-        simpleMailMessage.setTo(requestData.getEmail());
-        simpleMailMessage.setSentDate(Date.from(Instant.now()));
-        simpleMailMessage.setSubject("Otp token to verify email");
-        simpleMailMessage.setText("Email Verification\n\n" +
+    private void sendMailToBroker(ForgetPasswordVerifyRequestDto requestData, String otpCode) {
+        //send mail to broker
+        BrokerMailMessage brokerMailMessage= new BrokerMailMessage();
+        brokerMailMessage.setFromMail(appMail);
+        brokerMailMessage.setToMail(requestData.getEmail());
+        brokerMailMessage.setMessage( "Email Verification\n\n" +
                 "Hello,\n\n" +
                 "Your email verification code is: " + otpCode + "\n\n" +
-                "Please enter this code to verify your email address and reset your password.\n\n" +
+                "Please enter this code to verify your email address and complete your registration.\n\n" +
                 "This verification code will expire in 15 minutes. " +
                 "For your security, please do not share this code with anyone.\n\n" +
                 "If you did not request this verification code, you can safely ignore this email.\n\n" +
                 "Thank you,\n" +
                 "The Scentra Team");
-        javaMailSender.send(simpleMailMessage);
+        brokerMailMessage.setExchangeName("auth.exchange");
+        brokerMailMessage.setRoutingKey("email.notification");
+
+        rabbitProducer.sendMail(brokerMailMessage);
+
+
+
     }
 
 
