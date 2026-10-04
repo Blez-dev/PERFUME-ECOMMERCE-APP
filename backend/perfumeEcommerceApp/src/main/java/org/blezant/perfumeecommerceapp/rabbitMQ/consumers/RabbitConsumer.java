@@ -37,7 +37,7 @@ public class RabbitConsumer {
 
 
         CreateEmailOptions messageBody= CreateEmailOptions.builder()
-                .from("onboarding@resend.dev").
+                .from("scentra-app@api.blezant.com").
                 to(brokerMailMessage.getToMail())
                 .text(brokerMailMessage.getMessage())
                 .subject("Email Verification Token")

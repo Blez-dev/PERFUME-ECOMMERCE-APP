@@ -15,5 +15,6 @@ public class RabbitProducer {
 
     public void sendMail(BrokerMailMessage brokerMailMessage) {
         rabbitTemplate.convertAndSend(brokerMailMessage.getExchangeName(),brokerMailMessage.getRoutingKey(),brokerMailMessage);
+
     }
 }
