@@ -1,4 +1,4 @@
-package org.blezant.perfumeecommerceapp.auth.entities;
+package org.blezant.perfumeecommerceapp.jwt.entities;
 
 
 import jakarta.persistence.Column;
@@ -10,8 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigInteger;
-import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Entity
 @AllArgsConstructor

@@ -40,6 +40,11 @@ public class SecurityConfiguration {
     }
 
     @Bean
+    BCryptPasswordEncoder encoder(){
+      return new BCryptPasswordEncoder(10);
+    }
+
+    @Bean
     AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration){
         return authenticationConfiguration.getAuthenticationManager();
     }

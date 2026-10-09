@@ -7,12 +7,20 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 public interface VerificationRepository extends JpaRepository<VerificationTokenEntity,String> {
 
+    @Transactional
+
+    void deleteByEmail(String email);
 
 
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE from auth_verification where expiration<?1",nativeQuery = true)
+    void deleteToken(Long timeInMills);
 
     @Modifying
     @Transactional

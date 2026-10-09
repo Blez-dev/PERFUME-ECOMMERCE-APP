@@ -16,6 +16,9 @@ public interface AuthRepository extends JpaRepository<RegisterEntity,String> {
 
     Optional<RegisterEntity> findByEmail(String email);
 
+    @Transactional
+
+    void deleteByEmail(String email);
 
     @Transactional
     @Modifying

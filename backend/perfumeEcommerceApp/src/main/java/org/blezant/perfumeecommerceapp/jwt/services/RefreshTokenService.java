@@ -6,7 +6,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.blezant.perfumeecommerceapp.auth.entities.RefreshTokenEntity;
+import org.blezant.perfumeecommerceapp.jwt.entities.RefreshTokenEntity;
 import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomAuthenticationEntryPoint;
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomBadRequestException;
@@ -20,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.math.BigInteger;
 import java.util.Optional;
 
 @Service
@@ -63,6 +64,17 @@ public class RefreshTokenService {
         if (refreshTokenEntity.isEmpty()) {
             throw new CustomBadRequestException("Refresh Token Does Not Exist");
         }
+
+        //get present time
+        BigInteger currentTimeInMills= BigInteger.valueOf(System.currentTimeMillis());
+
+        //check if refresh token is still valid
+        boolean isValid= refreshTokenEntity.get().getValidUntil().compareTo(currentTimeInMills) <0;
+        if(!isValid){
+            throw  new CustomBadRequestException("Refresh token expired");
+        }
+
+
         //compare access Token
         if (!(accessToken.equals(refreshTokenEntity.get().getAccessToken()))) {
             throw new CustomBadRequestException("Access Token Does Not Exist");

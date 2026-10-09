@@ -70,5 +70,11 @@ public class AuthController {
        return  ResponseEntity.status(HttpStatus.CREATED).body(responseData);
     }
 
+    @PostMapping("/delete/account")
+    public ResponseEntity<DeleteAccountResponseDto> deleteAcc(@Valid @RequestBody DeleteAccountRequestDto requestData){
+       DeleteAccountResponseDto responseData= authService.deleteAccount(requestData);
+       return  ResponseEntity.status(HttpStatus.OK).body(responseData);
+    }
+
 }
 

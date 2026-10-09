@@ -1,6 +1,7 @@
 package org.blezant.perfumeecommerceapp.auth.services;
 
-import org.blezant.perfumeecommerceapp.auth.entities.RefreshTokenEntity;
+import jakarta.validation.Valid;
+import org.blezant.perfumeecommerceapp.jwt.entities.RefreshTokenEntity;
 import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
 import org.blezant.perfumeecommerceapp.auth.entities.VerificationTokenEntity;
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomBadRequestException;
@@ -12,8 +13,6 @@ import org.blezant.perfumeecommerceapp.jwt.services.JwtService;
 import org.blezant.perfumeecommerceapp.jwt.services.RefreshTokenService;
 import org.blezant.perfumeecommerceapp.rabbitMQ.producers.RabbitProducer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
@@ -37,6 +35,7 @@ public class AuthService {
     @Value("${resend.mail}")
     private String appMail;
 
+    private final BCryptPasswordEncoder encoder;
     private final AuthRepository authRepository;
     private final VerificationTokenService verificationTokenService;
     private final VerificationRepository verificationRepository;
@@ -50,7 +49,7 @@ public class AuthService {
 
 
 
-    AuthService(AuthRepository authRepository, VerificationTokenService verificationTokenService, VerificationRepository verificationRepository, AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, CustomUserDetailsService customUserDetailsService, RabbitProducer rabbitProducer) {
+    AuthService(AuthRepository authRepository, VerificationTokenService verificationTokenService, VerificationRepository verificationRepository, AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, CustomUserDetailsService customUserDetailsService, RabbitProducer rabbitProducer,BCryptPasswordEncoder encoder) {
         this.authRepository = authRepository;
         this.verificationTokenService = verificationTokenService;
         this.verificationRepository = verificationRepository;
@@ -59,7 +58,7 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
         this.refreshTokenRepository = refreshTokenRepository;
         this.customUserDetailsService = customUserDetailsService;
-
+        this.encoder=encoder;
         this.rabbitProducer=rabbitProducer;
     }
 
@@ -358,5 +357,29 @@ public class AuthService {
         data.setMessage("Password changed successfully");
         return data;
 
+    }
+
+    public DeleteAccountResponseDto deleteAccount(@Valid DeleteAccountRequestDto requestData) {
+        //check if email exists
+        Optional<RegisterEntity> userData= authRepository.findByEmail(requestData.getEmail());
+        if(userData.isEmpty()){
+            throw  new CustomBadRequestException("User does not exist");
+        }
+        //check password
+        boolean isPasswordCorrect= encoder.matches(requestData.getPassword(), userData.get().getPassword());
+        if(!isPasswordCorrect){
+            throw  new CustomBadRequestException("Incorrect Password");
+        }
+
+        //delete data from all three repositories
+        authRepository.deleteByEmail(requestData.getEmail());
+        verificationRepository.deleteByEmail(requestData.getEmail());
+        refreshTokenRepository.deleteByEmail(requestData.getEmail());
+
+        //build and return response back to user
+        DeleteAccountResponseDto responseData= new DeleteAccountResponseDto();
+        responseData.setMessage("Account deleted successfully");
+        responseData.setStatus(true);
+        return  responseData;
     }
 }
