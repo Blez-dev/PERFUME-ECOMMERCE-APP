@@ -2,7 +2,7 @@ package org.blezant.perfumeecommerceapp.auth.schedulers;
 
 
 
-import org.blezant.perfumeecommerceapp.auth.repositories.RefreshTokenRepository;
+import org.blezant.perfumeecommerceapp.jwt.repositories.RefreshTokenRepository;
 import org.blezant.perfumeecommerceapp.auth.repositories.VerificationRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

@@ -32,7 +32,7 @@ public class RegisterRequestDto {
     @NotBlank(message = "VerificationTokenEntity field can't be blank")
     private String verificationToken;
     @NotBlank(message = "EmailOtp field can't be blank")
-    @Size(message = "Least of 6 characters")
+    @Size(min = 6, message = "Least of 6 characters")
     @Column(name = "otpCode")
     private String emailOtp;
 }

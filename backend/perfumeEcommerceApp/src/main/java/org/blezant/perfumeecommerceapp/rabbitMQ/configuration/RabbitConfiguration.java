@@ -4,7 +4,6 @@ package org.blezant.perfumeecommerceapp.rabbitMQ.configuration;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +11,25 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfiguration {
+    //create exchange name
+    @Bean
+    public  DirectExchange imageUploadExchange(){
+        return  new DirectExchange("image.exchange");
+    }
+
+
+    @Bean
+    public  Queue imageQueue(){
+        return  new Queue("image.queue");
+    }
+
+    @Bean
+    public  Binding imageBinding(){
+        return  BindingBuilder.bind(imageQueue()).to(imageUploadExchange()).with("image.upload");
+    }
+
+
+
 
     //create bean for exchange
     @Bean

@@ -11,7 +11,7 @@ import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomAuthenticationEntryPoint;
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomBadRequestException;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
-import org.blezant.perfumeecommerceapp.auth.repositories.RefreshTokenRepository;
+import org.blezant.perfumeecommerceapp.jwt.repositories.RefreshTokenRepository;
 import org.blezant.perfumeecommerceapp.auth.services.CustomUserDetailsService;
 import org.blezant.perfumeecommerceapp.jwt.models.RefreshTokenRequestDto;
 import org.blezant.perfumeecommerceapp.jwt.models.RefreshTokenResponseDto;

@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.PublicKey;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -23,28 +25,51 @@ public class AuthController {
    }
 
 
-    //controller to register
+    //controllers to register
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDTO> signUp(@Valid @RequestBody RegisterRequestDto registerRequestDto){
         RegisterResponseDTO signUpResponse= authService.RegisterUser(registerRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(signUpResponse);
     }
 
-    //controller to verify email to register
+    //controllers to verify email to register
     @PostMapping("/register/verify")
     public ResponseEntity<VerifyRegisterResponseDto> verifyEmailRegistration(@Valid @RequestBody VerifyRegisterRequestDto verifyRegisterRequestDto){
        VerifyRegisterResponseDto verifyRegisterResponseDto=verificationTokenService.requestOtp(verifyRegisterRequestDto);
        return  ResponseEntity.status(HttpStatus.OK).body(verifyRegisterResponseDto);
     }
 
-    //controller to login
+
+    @PostMapping("/register/admin")
+    public  ResponseEntity<AdminRegisterResponseDto> registerAdmin(@Valid @RequestBody AdminRegisterRequestDto requestData){
+        AdminRegisterResponseDto responseData= authService.registerAdmin(requestData);
+        return  ResponseEntity.status(HttpStatus.CREATED).body(responseData);
+
+    }
+
+    //controllers to login admin
+    @PostMapping("/login/admin")
+    public ResponseEntity<LoginResponseDto> loginAdmin(@Valid @RequestBody LoginRequestDto requestData){
+       LoginResponseDto responseData= authService.loginAdmin(requestData);
+       return  ResponseEntity.status(HttpStatus.OK).body(responseData);
+    }
+
+
+    //Controller to verify admin
+    @PostMapping("/register/verify/admin")
+    public ResponseEntity<VerifyRegisterAdminResponseDto> verifyAdminEmail(@Valid@RequestBody VerifyRegisterAdminRequestDto requestData){
+       VerifyRegisterAdminResponseDto responseData= authService.verifyAdminAccount(requestData);
+       return  ResponseEntity.status(HttpStatus.OK).body(responseData);
+    }
+
+    //controllers to login
     @PostMapping("/login")
     public ResponseEntity<?> login( @Valid @RequestBody LoginRequestDto loginData ){
        LoginResponseDto loginResponse= authService.login(loginData);
        return ResponseEntity.status(HttpStatus.OK).body(loginResponse);
     }
 
-    //controller to verify email to forget password
+    //controllers to verify email to forget password
     @PostMapping("/forget-password/verify")
     public ResponseEntity<ForgetPasswordVerifyResponseDto> verifyEmailForgetPassword(@Valid @RequestBody ForgetPasswordVerifyRequestDto requestData){
        ForgetPasswordVerifyResponseDto responseData= authService.verifyEmailForgetPassword(requestData);
@@ -56,14 +81,14 @@ public class AuthController {
        return  "Done";
     }
 
-    //controller to forget password
+    //controllers to forget password
     @PostMapping("/forget-password")
     public  ResponseEntity<ForgetPasswordResponseDto> forgetPassword(@Valid @RequestBody ForgetPasswordRequestDto requestData){
        ForgetPasswordResponseDto responseData= authService.forgetPassword(requestData);
        return  ResponseEntity.status(HttpStatus.CREATED).body(responseData);
     }
 
-    //controller to reset password
+    //controllers to reset password
     @PostMapping("/reset/password")
     public ResponseEntity<ResetPasswordResponseDto> resetPassword(@Valid @RequestBody ResetPasswordRequestDto requestData){
        ResetPasswordResponseDto responseData=authService.resetPassword(requestData);

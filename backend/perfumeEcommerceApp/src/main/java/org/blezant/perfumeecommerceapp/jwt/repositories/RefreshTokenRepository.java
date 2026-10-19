@@ -1,4 +1,4 @@
-package org.blezant.perfumeecommerceapp.auth.repositories;
+package org.blezant.perfumeecommerceapp.jwt.repositories;
 
 import org.blezant.perfumeecommerceapp.jwt.entities.RefreshTokenEntity;
 import org.springframework.data.jpa.repository.JpaRepository;

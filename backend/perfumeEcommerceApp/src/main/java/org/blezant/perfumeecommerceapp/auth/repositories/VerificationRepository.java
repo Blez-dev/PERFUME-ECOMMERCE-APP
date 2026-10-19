@@ -22,6 +22,7 @@ public interface VerificationRepository extends JpaRepository<VerificationTokenE
     @Query(value = "DELETE from auth_verification where expiration<?1",nativeQuery = true)
     void deleteToken(Long timeInMills);
 
+
     @Modifying
     @Transactional
     @Query(value = "update auth_verification set attempts=?1 where verification_token=?2",nativeQuery = true)

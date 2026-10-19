@@ -2,7 +2,7 @@ package org.blezant.perfumeecommerceapp.auth.configurations;
 
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomAuthenticationEntryPoint;
 import org.blezant.perfumeecommerceapp.auth.services.CustomUserDetailsService;
-import org.blezant.perfumeecommerceapp.auth.services.JwtFilter;
+import org.blezant.perfumeecommerceapp.jwt.services.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,7 +12,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -35,7 +34,7 @@ public class SecurityConfiguration {
     @Bean
     AuthenticationProvider daoAuthenticationProvider(){
         DaoAuthenticationProvider daoAuthenticationProvider= new DaoAuthenticationProvider(customUserDetailsService);
-        daoAuthenticationProvider.setPasswordEncoder(new BCryptPasswordEncoder(10));
+        daoAuthenticationProvider.setPasswordEncoder(encoder());
         return  daoAuthenticationProvider;
     }
 
@@ -58,7 +57,7 @@ public class SecurityConfiguration {
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/auth/register", "/auth/register/verify", "/auth/login","/refresh/token","/auth/forget-password/verify","/auth/forget-password").permitAll().anyRequest().authenticated())
+                        .requestMatchers("/auth/register", "/auth/register/verify", "/auth/login","/refresh/token","/auth/forget-password/verify","/auth/forget-password","/auth/register/verify/admin","/auth/register/admin","/auth/login/admin").permitAll().anyRequest().authenticated())
                 .build();
 
     }

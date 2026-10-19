@@ -10,17 +10,12 @@ import org.blezant.perfumeecommerceapp.auth.models.VerifyRegisterResponseDto;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
 import org.blezant.perfumeecommerceapp.auth.repositories.VerificationRepository;
 import org.blezant.perfumeecommerceapp.rabbitMQ.producers.RabbitProducer;
-import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;

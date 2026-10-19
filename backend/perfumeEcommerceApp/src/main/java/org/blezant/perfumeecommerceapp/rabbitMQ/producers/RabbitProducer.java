@@ -1,6 +1,7 @@
 package org.blezant.perfumeecommerceapp.rabbitMQ.producers;
 
 
+import org.blezant.perfumeecommerceapp.admin.models.ImageUploadData;
 import org.blezant.perfumeecommerceapp.auth.models.BrokerMailMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
@@ -16,5 +17,9 @@ public class RabbitProducer {
     public void sendMail(BrokerMailMessage brokerMailMessage) {
         rabbitTemplate.convertAndSend(brokerMailMessage.getExchangeName(),brokerMailMessage.getRoutingKey(),brokerMailMessage);
 
+    }
+
+    public void uploadImage(ImageUploadData imageUploadData){
+        rabbitTemplate.convertAndSend(imageUploadData.getExchangeName(),imageUploadData.getRoutingKey(),imageUploadData);
     }
 }

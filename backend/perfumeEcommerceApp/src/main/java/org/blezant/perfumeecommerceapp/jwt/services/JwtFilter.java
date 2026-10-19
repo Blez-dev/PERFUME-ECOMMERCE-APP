@@ -1,4 +1,4 @@
-package org.blezant.perfumeecommerceapp.auth.services;
+package org.blezant.perfumeecommerceapp.jwt.services;
 
 
 import io.jsonwebtoken.ExpiredJwtException;
@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomAuthenticationEntryPoint;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
-import org.blezant.perfumeecommerceapp.jwt.services.JwtService;
+import org.blezant.perfumeecommerceapp.auth.services.CustomUserDetailsService;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;

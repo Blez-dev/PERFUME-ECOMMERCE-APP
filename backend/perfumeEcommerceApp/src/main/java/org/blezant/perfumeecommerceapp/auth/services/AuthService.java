@@ -7,7 +7,7 @@ import org.blezant.perfumeecommerceapp.auth.entities.VerificationTokenEntity;
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomBadRequestException;
 import org.blezant.perfumeecommerceapp.auth.models.*;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
-import org.blezant.perfumeecommerceapp.auth.repositories.RefreshTokenRepository;
+import org.blezant.perfumeecommerceapp.jwt.repositories.RefreshTokenRepository;
 import org.blezant.perfumeecommerceapp.auth.repositories.VerificationRepository;
 import org.blezant.perfumeecommerceapp.jwt.services.JwtService;
 import org.blezant.perfumeecommerceapp.jwt.services.RefreshTokenService;
@@ -48,8 +48,7 @@ public class AuthService {
     RabbitProducer rabbitProducer;
 
 
-
-    AuthService(AuthRepository authRepository, VerificationTokenService verificationTokenService, VerificationRepository verificationRepository, AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, CustomUserDetailsService customUserDetailsService, RabbitProducer rabbitProducer,BCryptPasswordEncoder encoder) {
+    AuthService(AuthRepository authRepository, VerificationTokenService verificationTokenService, VerificationRepository verificationRepository, AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, CustomUserDetailsService customUserDetailsService, RabbitProducer rabbitProducer, BCryptPasswordEncoder encoder) {
         this.authRepository = authRepository;
         this.verificationTokenService = verificationTokenService;
         this.verificationRepository = verificationRepository;
@@ -58,14 +57,17 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
         this.refreshTokenRepository = refreshTokenRepository;
         this.customUserDetailsService = customUserDetailsService;
-        this.encoder=encoder;
-        this.rabbitProducer=rabbitProducer;
+        this.encoder = encoder;
+        this.rabbitProducer = rabbitProducer;
     }
 
     @Transactional
     public LoginResponseDto login(LoginRequestDto loginData) {
 
+
+
         Authentication authenticationToken = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginData.getEmail(), loginData.getPassword()));
+
         //create variables
         String accessToken = null;
         String refreshToken = null;
@@ -147,7 +149,7 @@ public class AuthService {
         verificationRepository.updateVerificationStatus(true, registerRequestDto.getVerificationToken());
         //Hash Password
         String hashedPassword = hashPassword(registerRequestDto);
-        //save user details in database
+        //save user DetailsRepository in database
         createAccountInDatabase(registerRequestDto, hashedPassword, userId);
         //construct response and send
         RegisterResponseDTO registerResponseDTO = new RegisterResponseDTO();
@@ -214,13 +216,12 @@ public class AuthService {
 
     public ForgetPasswordVerifyResponseDto verifyEmailForgetPassword(ForgetPasswordVerifyRequestDto requestData) {
         //check email doesn't belong to sender
-        System.out.println("1");
+
         checkEmail(requestData.getEmail());
-        //load user vTokenEntity
-        System.out.println("2");
+
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(requestData.getEmail());
         //verify acc status
-        System.out.println("3");
+
         if (!(userDetails.isEnabled() && userDetails.isAccountNonLocked() && userDetails.isCredentialsNonExpired() && userDetails.isEnabled())) {
             throw new CustomBadRequestException("Account is disabled");
         }
@@ -263,10 +264,10 @@ public class AuthService {
 
     private void sendMailToBroker(ForgetPasswordVerifyRequestDto requestData, String otpCode) {
         //send mail to broker
-        BrokerMailMessage brokerMailMessage= new BrokerMailMessage();
+        BrokerMailMessage brokerMailMessage =  new BrokerMailMessage();
         brokerMailMessage.setFromMail(appMail);
         brokerMailMessage.setToMail(requestData.getEmail());
-        brokerMailMessage.setMessage( "Email Verification\n\n" +
+        brokerMailMessage.setMessage("Email Verification\n\n" +
                 "Hello,\n\n" +
                 "Your email verification code is: " + otpCode + "\n\n" +
                 "Please enter this code to verify your email address and complete your registration.\n\n" +
@@ -279,7 +280,6 @@ public class AuthService {
         brokerMailMessage.setRoutingKey("email.notification");
 
         rabbitProducer.sendMail(brokerMailMessage);
-
 
 
     }
@@ -333,7 +333,7 @@ public class AuthService {
         String email = requestData.getEmail();
         String newPassword = requestData.getNewPassword();
         String oldPassword = requestData.getOldPassword();
-        //load user details
+        //load user DetailsRepository
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
         //check acc status
         if (!(userDetails.isEnabled() && userDetails.isAccountNonLocked() && userDetails.isCredentialsNonExpired() && userDetails.isAccountNonExpired())) {
@@ -361,14 +361,14 @@ public class AuthService {
 
     public DeleteAccountResponseDto deleteAccount(@Valid DeleteAccountRequestDto requestData) {
         //check if email exists
-        Optional<RegisterEntity> userData= authRepository.findByEmail(requestData.getEmail());
-        if(userData.isEmpty()){
-            throw  new CustomBadRequestException("User does not exist");
+        Optional<RegisterEntity> userData = authRepository.findByEmail(requestData.getEmail());
+        if (userData.isEmpty()) {
+            throw new CustomBadRequestException("User does not exist");
         }
         //check password
-        boolean isPasswordCorrect= encoder.matches(requestData.getPassword(), userData.get().getPassword());
-        if(!isPasswordCorrect){
-            throw  new CustomBadRequestException("Incorrect Password");
+        boolean isPasswordCorrect = encoder.matches(requestData.getPassword(), userData.get().getPassword());
+        if (!isPasswordCorrect) {
+            throw new CustomBadRequestException("Incorrect Password");
         }
 
         //delete data from all three repositories
@@ -377,9 +377,188 @@ public class AuthService {
         refreshTokenRepository.deleteByEmail(requestData.getEmail());
 
         //build and return response back to user
-        DeleteAccountResponseDto responseData= new DeleteAccountResponseDto();
+        DeleteAccountResponseDto responseData = new DeleteAccountResponseDto();
         responseData.setMessage("Account deleted successfully");
         responseData.setStatus(true);
+        return responseData;
+    }
+
+
+    @Transactional
+    public VerifyRegisterAdminResponseDto verifyAdminAccount(VerifyRegisterAdminRequestDto requestData) {
+        //Extract email
+        String email = requestData.getEmail();
+        //check that email does not exist
+        Optional<RegisterEntity> userData = authRepository.findByEmail(email);
+        if (userData.isPresent()) {
+            throw new CustomBadRequestException("Email already in use");
+        }
+        //Generate UUID to uniquely store otp code
+        String randomUUID = UUID.randomUUID().toString();
+        //Generate otp code
+        Random random = new Random();
+        String otpCode = Integer.toString(random.nextInt(100000, 900000));
+        //store in the database
+        VerificationTokenEntity verificationToken = VerificationTokenEntity.builder().
+                verificationToken(randomUUID)
+                .verified(false)
+                .attempts(0)
+                .email(email)
+                .expiration(System.currentTimeMillis() + 900000)
+                .otpHash(encoder.encode(otpCode))
+                .build();
+        verificationRepository.save(verificationToken);
+        //send message to broker
+        BrokerMailMessage brokerMailMessage= BrokerMailMessage.builder()
+                .routingKey("email.notification").fromMail(appMail).toMail(email)
+                .message("Email Verification\n\n" +
+                        "Hello,\n\n" +
+                        "Your email verification code is: " + otpCode + "\n\n" +
+                        "Please enter this code to verify your email address and complete your registration.\n\n" +
+                        "This verification code will expire in 15 minutes. " +
+                        "For your security, please do not share this code with anyone.\n\n" +
+                        "If you did not request this verification code, you can safely ignore this email.\n\n" +
+                        "Thank you,\n" +
+                        "The Scentra Team").
+                exchangeName("auth.exchange")
+                .build();
+
+
+        rabbitProducer.sendMail(brokerMailMessage);
+
+        //build and return response back to user
+        VerifyRegisterAdminResponseDto responseData= VerifyRegisterAdminResponseDto.builder()
+                .email(email)
+                .verificationToken(randomUUID)
+                .build();
+
+        return  responseData;
+    }
+
+
+    @Transactional
+    public AdminRegisterResponseDto registerAdmin( AdminRegisterRequestDto requestData) {
+
+
+        //create userId
+        String userId= UUID.randomUUID().toString().substring(0,13);
+      //check register repo if email address exists
+      Optional<RegisterEntity> userData= authRepository.findByEmail(requestData.getEmail());
+      if(userData.isPresent()){
+          throw  new CustomBadRequestException("Email address already exists");
+      }
+      //verify email otp and verification token
+        Optional<VerificationTokenEntity> verificationToken= verificationRepository.findByVerificationToken(requestData.getVerificationToken());
+        if(verificationToken.isEmpty()){
+            throw  new CustomBadRequestException("Invalid verificationToken");
+        }
+        //check otp
+        boolean isValid= encoder.matches(requestData.getEmailOtp(),verificationToken.get().getOtpHash());
+        if(!isValid){
+            throw  new CustomBadRequestException("Incorrect otp code");
+        }
+        //check if verification Token is already verified
+        if(verificationToken.get().getVerified()==true){
+            throw  new CustomBadRequestException("Invalid verification Token");
+        }
+        //check the expiration
+        if (verificationToken.get().getExpiration().equals(System.currentTimeMillis()) || verificationToken.get().getExpiration() < System.currentTimeMillis()) {
+            throw new CustomBadRequestException("Verification token expired");
+        }
+        //check the attempts
+        if (verificationToken.get().getAttempts().equals(3)) {
+            throw new CustomBadRequestException("Max attempts used");
+        }
+
+
+      //Hash password
+        String hashedPassword= encoder.encode(requestData.getPassword());
+
+        //increment number of attempts
+        verificationTokenService.incrementAttempts(verificationToken);
+
+
+        //save all user data
+        RegisterEntity userNewData= new RegisterEntity();
+        userNewData.setRole("ADMIN");
+        userNewData.setPassword(hashedPassword);
+        userNewData.setUserId(userId);
+        userNewData.setUsername(requestData.getUsername());
+        userNewData.setEmail(requestData.getEmail());
+        userNewData.setCreatedAt(Instant.now());
+        userNewData.setAccLocked(false);
+        authRepository.save(userNewData);
+
+        //build and return response back to user
+        AdminRegisterResponseDto responseData= new AdminRegisterResponseDto();
+        responseData.setEmail(requestData.getEmail());
+        responseData.setUserId(userId);
+        responseData.setStatus(true);
+        responseData.setUsername(requestData.getUsername());
+        responseData.setMessage("User registered successfully");
+
+        return  responseData;
+    }
+
+    public LoginResponseDto loginAdmin( LoginRequestDto requestData) {
+        //set up all instance variables
+        String email= requestData.getEmail();
+        String password= requestData.getPassword();
+        String userId=null;
+        String refreshToken= null;
+        String accessToken=null;
+        String message=null;
+        boolean status=false;
+
+        //check if user exists via email
+        Optional<RegisterEntity> userData= authRepository.findByEmail(email);
+        if(userData.isEmpty()){
+            throw new CustomBadRequestException("Invalid credentials");
+        }
+
+        //check if password is correct
+        boolean isCorrect= encoder.matches(password,userData.get().getPassword());
+        if(!isCorrect){
+            throw new CustomBadRequestException("Invalid credentials");
+        }
+
+        //check if role is admin
+        if(userData.get().getRole().equals("USER")){
+            throw new CustomBadRequestException("Admin credentials required");
+        }
+
+        //Delete all current  jwt data
+        refreshTokenRepository.deleteByEmail(email);
+
+
+
+        //Generate new refresh token and access token
+        refreshToken= jwtService.generateRefreshToken();
+        accessToken= jwtService.generateAccessToken(userData.get());
+
+        BigInteger createdAt= new BigInteger(String.valueOf(System.currentTimeMillis()));
+        BigInteger expiresAt = createdAt.add(BigInteger.valueOf(900000L));
+
+        //update new jwt data
+        RefreshTokenEntity jwtData=new RefreshTokenEntity();
+        jwtData.setEmail(email);
+        jwtData.setCreatedAt(BigInteger.valueOf(System.currentTimeMillis()));
+        jwtData.setAccessToken(accessToken);
+        jwtData.setRefreshToken(refreshToken);
+        jwtData.setValidUntil(expiresAt);
+        refreshTokenRepository.save(jwtData);
+
+        //Build response and get back to user
+        userId=userData.get().getUserId();
+        status=true;
+        message="Login Successful";
+        LoginResponseDto responseData= new LoginResponseDto();
+        responseData.setAccessToken(accessToken);
+        responseData.setRefreshToken(refreshToken);
+        responseData.setEmail(email);
+        responseData.setUserId(userId);
+        responseData.setMessage(message);
+        responseData.setStatus(status);
         return  responseData;
     }
 }
