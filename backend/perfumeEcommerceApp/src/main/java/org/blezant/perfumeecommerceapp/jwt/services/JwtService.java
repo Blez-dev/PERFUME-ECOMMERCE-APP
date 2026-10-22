@@ -7,6 +7,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
+import org.apache.tika.Tika;
+import org.blezant.perfumeecommerceapp.admin.configuration.TikaConfig;
 import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
 import org.blezant.perfumeecommerceapp.auth.services.CustomUserDetailsService;
@@ -37,6 +39,7 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", userData.getRole()
         );
+
 
         return Jwts.builder().signWith(getKey())
                 .claims(claims)
@@ -90,5 +93,12 @@ public class JwtService {
         }catch (ExpiredJwtException e){
             return true;
         }
+    }
+
+    public String getUserId(String jwtToken) {
+        byte[] byteKey=Decoders.BASE64.decode(secretKey);
+        SecretKey secretKey1=Keys.hmacShaKeyFor(byteKey);
+        Map<String,Object> claims= Jwts.parser().verifyWith(secretKey1).build().parseSignedClaims(jwtToken).getPayload();
+        return  claims.get("role").toString();
     }
 }

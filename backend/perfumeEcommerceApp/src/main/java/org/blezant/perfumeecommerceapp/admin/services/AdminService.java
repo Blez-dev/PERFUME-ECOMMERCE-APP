@@ -1,17 +1,19 @@
 package org.blezant.perfumeecommerceapp.admin.services;
 
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.apache.tika.Tika;
-import org.blezant.perfumeecommerceapp.admin.models.ImageUploadData;
-import org.blezant.perfumeecommerceapp.admin.models.UploadPerfumeRequestDto;
-import org.blezant.perfumeecommerceapp.admin.models.UploadPerfumeResponseDto;
+import org.blezant.perfumeecommerceapp.admin.models.*;
 import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
 import org.blezant.perfumeecommerceapp.auth.exceptions.CustomBadRequestException;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
 import org.blezant.perfumeecommerceapp.aws.service.AwsService;
+import org.blezant.perfumeecommerceapp.jwt.services.JwtService;
 import org.blezant.perfumeecommerceapp.product.entities.Perfumes;
 import org.blezant.perfumeecommerceapp.product.repositories.PerfumeRepository;
 import org.blezant.perfumeecommerceapp.rabbitMQ.producers.RabbitProducer;
+import org.springframework.http.HttpRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,13 +31,15 @@ public class AdminService {
     private  final RabbitProducer rabbitProducer;
     private  final PerfumeRepository perfumeRepository;
     private  final AwsService awsService;
+    private  final JwtService jwtService;
 
-    public AdminService(Tika tika, AuthRepository authRepository, RabbitProducer rabbitProducer, PerfumeRepository perfumeRepository, AwsService awsService) {
+    public AdminService(Tika tika, AuthRepository authRepository, RabbitProducer rabbitProducer, PerfumeRepository perfumeRepository, AwsService awsService, JwtService jwtService) {
         this.tika = tika;
         this.authRepository = authRepository;
         this.rabbitProducer = rabbitProducer;
         this.perfumeRepository = perfumeRepository;
         this.awsService = awsService;
+        this.jwtService = jwtService;
     }
 
     public UploadPerfumeResponseDto uploadProduct(UploadPerfumeRequestDto requestData, MultipartFile imageData) {
@@ -102,5 +106,34 @@ public class AdminService {
         responseData.setStatus(true);
         responseData.setPid(perfumeId);
         return  responseData;
+    }
+
+
+    public DeletePerfumeResponse deletePerfume(DeletePerfumeRequest requestData, HttpServletRequest httpServletRequest) {
+       //extract jwt token
+        String jwtToken= httpServletRequest.getHeader("Authorization");
+
+        //extract client's role from jwt
+        String role= jwtService.getUserId(jwtToken.substring(7));
+
+        //verify role
+        if(!role.equals("ADMIN")){
+           throw new CustomBadRequestException("Forbidden action");
+        }
+
+        //verify product exists
+        Optional<Perfumes> perfumes= perfumeRepository.findById(requestData.getPerfumeId());
+        if(perfumes.isEmpty()){
+            throw new CustomBadRequestException("Invalid perfume Id");
+        }
+
+        //Delete product
+        perfumeRepository.deleteById(requestData.getPerfumeId());
+
+        //return response
+        DeletePerfumeResponse deletePerfumeResponse= new DeletePerfumeResponse();
+        deletePerfumeResponse.setMessage("Perfume Deleted successfully");
+        deletePerfumeResponse.setStatus(true);
+return  deletePerfumeResponse;
     }
 }

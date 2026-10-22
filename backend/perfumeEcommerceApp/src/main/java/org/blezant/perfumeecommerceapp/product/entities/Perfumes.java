@@ -27,4 +27,5 @@ public class Perfumes {
     private BigDecimal price;
     @OneToMany(mappedBy = "perfumes",fetch = FetchType.LAZY)
     List<Reviews> reviews= new ArrayList<>();
+
 }

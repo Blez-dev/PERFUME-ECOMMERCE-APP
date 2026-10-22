@@ -1,4 +1,4 @@
-package org.blezant.perfumeecommerceapp.admin.controllers;
+package org.blezant.perfumeecommerceapp.admin.configuration;
 
 
 import org.apache.tika.Tika;

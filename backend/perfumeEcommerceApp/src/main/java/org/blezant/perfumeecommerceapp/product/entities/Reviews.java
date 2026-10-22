@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.List;
 
@@ -15,13 +16,11 @@ import java.util.List;
 @Entity
 @Table(name = "reviews")
 public class Reviews {
-    String userId;
-    int rating;
-    String comment;
-    Instant timeOfComment;
     @Id
-    String pid;
-    String username;
+    String userId;
+    BigInteger starReview;
+    String commentReview;
+    Instant timeOfComment;
     @ManyToOne
     @JoinColumn(name = "perfumes_pid")
     Perfumes perfumes;
