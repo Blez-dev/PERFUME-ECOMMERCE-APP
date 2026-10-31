@@ -3,13 +3,13 @@ package org.blezant.perfumeecommerceapp.auth.services;
 
 import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
 import org.blezant.perfumeecommerceapp.auth.entities.VerificationTokenEntity;
-import org.blezant.perfumeecommerceapp.auth.exceptions.CustomBadRequestException;
+import org.blezant.perfumeecommerceapp.exceptions.CustomBadRequestException;
 import org.blezant.perfumeecommerceapp.auth.models.BrokerMailMessage;
 import org.blezant.perfumeecommerceapp.auth.models.VerifyRegisterRequestDto;
 import org.blezant.perfumeecommerceapp.auth.models.VerifyRegisterResponseDto;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
 import org.blezant.perfumeecommerceapp.auth.repositories.VerificationRepository;
-import org.blezant.perfumeecommerceapp.rabbitMQ.producers.RabbitProducer;
+import org.blezant.perfumeecommerceapp.external.rabbitMQ.producer.RabbitProducer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;

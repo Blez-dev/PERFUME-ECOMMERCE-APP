@@ -1,17 +1,17 @@
 package org.blezant.perfumeecommerceapp.auth.services;
 
 import jakarta.validation.Valid;
-import org.blezant.perfumeecommerceapp.jwt.entities.RefreshTokenEntity;
+import org.blezant.perfumeecommerceapp.security.jwt.entities.RefreshTokenEntity;
 import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
 import org.blezant.perfumeecommerceapp.auth.entities.VerificationTokenEntity;
-import org.blezant.perfumeecommerceapp.auth.exceptions.CustomBadRequestException;
+import org.blezant.perfumeecommerceapp.exceptions.CustomBadRequestException;
 import org.blezant.perfumeecommerceapp.auth.models.*;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
-import org.blezant.perfumeecommerceapp.jwt.repositories.RefreshTokenRepository;
+import org.blezant.perfumeecommerceapp.security.jwt.repositories.RefreshTokenRepository;
 import org.blezant.perfumeecommerceapp.auth.repositories.VerificationRepository;
-import org.blezant.perfumeecommerceapp.jwt.services.JwtService;
-import org.blezant.perfumeecommerceapp.jwt.services.RefreshTokenService;
-import org.blezant.perfumeecommerceapp.rabbitMQ.producers.RabbitProducer;
+import org.blezant.perfumeecommerceapp.security.jwt.services.JwtService;
+import org.blezant.perfumeecommerceapp.security.jwt.services.RefreshTokenService;
+import org.blezant.perfumeecommerceapp.external.rabbitMQ.producer.RabbitProducer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

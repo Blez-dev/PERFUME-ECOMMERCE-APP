@@ -1,7 +1,6 @@
 package org.blezant.perfumeecommerceapp.auth.services;
 
 import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
-import org.blezant.perfumeecommerceapp.auth.exceptions.CustomBadRequestException;
 import org.blezant.perfumeecommerceapp.auth.models.UserPrincipal;
 import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
 import org.springframework.security.core.userdetails.UserDetails;

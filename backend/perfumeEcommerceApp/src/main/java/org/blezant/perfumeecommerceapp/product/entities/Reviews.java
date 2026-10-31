@@ -8,16 +8,16 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "reviews")
+@Table(name = "review")
 public class Reviews {
-    @Id
     String userId;
+    @Id
+    String reviewId;
     BigInteger starReview;
     String commentReview;
     Instant timeOfComment;
