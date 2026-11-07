@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +24,10 @@ public interface PerfumeRepository extends JpaRepository<Perfumes,String> {
     @Query(value = "UPDATE perfumes set quantities=quantities-?1 where pid =?2  ",nativeQuery = true)
     void updateQuantityRecord(Long deductedQuantity,String pid);
 
+
+
+    @Query(value = "update perfumes set quantities=quantities+?1 where pid=?2",nativeQuery = true)
+    @Modifying
+    @Transactional
+    void updateQuantity(int itemUnits, String perfumeId);
 }

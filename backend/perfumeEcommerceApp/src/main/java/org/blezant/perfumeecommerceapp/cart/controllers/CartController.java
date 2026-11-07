@@ -3,17 +3,11 @@ package org.blezant.perfumeecommerceapp.cart.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.blezant.perfumeecommerceapp.cart.models.PerfumeAddRequestDto;
-import org.blezant.perfumeecommerceapp.cart.models.PerfumeAddResponseDto;
-import org.blezant.perfumeecommerceapp.cart.repositories.CartItemRepo;
-import org.blezant.perfumeecommerceapp.cart.repositories.CartRepo;
+import org.blezant.perfumeecommerceapp.cart.models.*;
 import org.blezant.perfumeecommerceapp.cart.services.CartService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class CartController {
@@ -21,13 +15,10 @@ public class CartController {
 
 
     private final CartService cartService;
-    private  final CartItemRepo cartItemRepo;
-    private  final CartRepo cartRepo;
 
-    public CartController(CartService cartService, CartItemRepo cartItemRepo, CartRepo cartRepo) {
+
+    public CartController(CartService cartService) {
         this.cartService = cartService;
-        this.cartItemRepo = cartItemRepo;
-        this.cartRepo = cartRepo;
     }
 
     @PostMapping("/cart/items")
@@ -36,10 +27,17 @@ public class CartController {
         return  ResponseEntity.status(HttpStatus.CREATED).body(perfumeAddResponseDto);
     }
 
-    @PostMapping("/delete")
-    public String delete(HttpServletRequest httpServletRequest){
-        cartRepo.deleteAll();
-        cartItemRepo.deleteAll();
-return "done";
+    @DeleteMapping("/cart-items/delete")
+    public ResponseEntity<DeleteCartItemResponseDto> deleteCartItem(HttpServletRequest httpServletRequest, @Valid @RequestBody DeleteCartItemsRequestDto requestDto){
+        DeleteCartItemResponseDto responseDto= cartService.deleteCartItem(httpServletRequest,requestDto);
+        return  ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
+
+    @DeleteMapping("/cart/delete")
+    public ResponseEntity<DeleteCartItemResponseDto> deleteCart(HttpServletRequest httpServletRequest, @Valid @RequestBody DeleteCartRequestDto requestBody){
+        DeleteCartItemResponseDto responseData= cartService.deleteCart(httpServletRequest,requestBody);
+        return  ResponseEntity.status(HttpStatus.OK).body(responseData);
+    }
+
+
 }

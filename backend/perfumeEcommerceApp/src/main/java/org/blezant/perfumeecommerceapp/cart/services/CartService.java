@@ -5,8 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.blezant.perfumeecommerceapp.cart.entities.Cart;
 import org.blezant.perfumeecommerceapp.cart.entities.CartItem;
-import org.blezant.perfumeecommerceapp.cart.models.PerfumeAddRequestDto;
-import org.blezant.perfumeecommerceapp.cart.models.PerfumeAddResponseDto;
+import org.blezant.perfumeecommerceapp.cart.models.*;
 import org.blezant.perfumeecommerceapp.cart.repositories.CartItemRepo;
 import org.blezant.perfumeecommerceapp.cart.repositories.CartRepo;
 import org.blezant.perfumeecommerceapp.exceptions.CustomBadRequestException;
@@ -14,10 +13,9 @@ import org.blezant.perfumeecommerceapp.product.entities.Perfumes;
 import org.blezant.perfumeecommerceapp.product.repositories.PerfumeRepository;
 import org.blezant.perfumeecommerceapp.security.jwt.services.JwtService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -138,5 +136,77 @@ public class CartService {
 
         //return respomse
         return perfumeAddResponseDto;
+    }
+
+    @Transactional
+    public DeleteCartItemResponseDto deleteCartItem(HttpServletRequest httpServletRequest, DeleteCartItemsRequestDto requestDto) {
+        //Check if cartItem exists
+        String cartItemId= requestDto.getCartItemId();
+        Optional<CartItem> cartItem= cartItemRepo.findById(cartItemId);
+        if(cartItem.isEmpty()){
+            throw new CustomBadRequestException("Invalid cart Item");
+        }
+        //Extract user Id
+        String jwtToken= jwtService.extractJwtToken(httpServletRequest);
+        String userId=jwtService.extractUserId(jwtToken);
+        //validate user's ownership
+        if(!(userId.equals(cartItem.get().getUserID()))){
+            throw new CustomBadRequestException("Forbidden request");
+        }
+        //update quantity
+        int itemUnits= cartItem.get().getUnits().intValue();
+        String perfumeId= cartItem.get().getPerfumes().getPid();
+        perfumeRepository.updateQuantity(itemUnits,perfumeId);
+
+        //find cartId
+         Optional<Cart> cart=cartRepo.findByUserId(userId);
+        String cartId=cart.get().getCartId();
+
+        //Delete cart Item
+        cartItemRepo.deleteById(cartItemId);
+
+
+        //Delete whole cart if no item remains
+        List<CartItem> cartItems=cartItemRepo.findByCartId(cartId);
+        if(cartItems.isEmpty()){
+            cartRepo.deleteById(cartId);
+        }
+
+        //Build response
+        DeleteCartItemResponseDto deleteCartItemResponseDto= new DeleteCartItemResponseDto();
+        deleteCartItemResponseDto.setMessage("Cart Item Deleted Successfully");
+        deleteCartItemResponseDto.setStatus(true);
+        return  deleteCartItemResponseDto;
+
+
+    }
+
+
+    @Transactional
+    public DeleteCartItemResponseDto deleteCart(HttpServletRequest httpServletRequest, DeleteCartRequestDto requestBody) {
+        //verify cart exists
+        Optional<Cart> cart= cartRepo.findById(requestBody.getCartId());
+        if(cart.isEmpty()){
+            throw new CustomBadRequestException("Invalid cart Item");
+        }
+
+        //confirm user's ownership
+        String jwtToken= jwtService.extractJwtToken(httpServletRequest);
+        String userId=jwtService.extractUserId(jwtToken);
+        if(!(userId.equals(cart.get().getUserId()))){
+            throw new CustomBadRequestException("Forbidden request");
+        }
+
+        //Delete all cart Items in the cart
+        cartItemRepo.deleteByCartId(requestBody.getCartId());
+
+        //Delete cart itself
+        cartRepo.deleteById(requestBody.getCartId());
+
+        //Build response
+        DeleteCartItemResponseDto deleteCartItemResponseDto= new DeleteCartItemResponseDto();
+        deleteCartItemResponseDto.setMessage("Cart  Deleted Successfully");
+        deleteCartItemResponseDto.setStatus(true);
+        return  deleteCartItemResponseDto;
     }
 }
