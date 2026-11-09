@@ -239,7 +239,7 @@ public class ProductService {
         }
     }
 
-    private  String getImageUrl(String imageKey) {
+    public   String getImageUrl(String imageKey) {
         if(imageKey.contains(" ")){
             imageKey= imageKey.replace(" ","+");
         }

@@ -2,7 +2,8 @@ package org.blezant.perfumeecommerceapp.cart.services;
 
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
+import org.blezant.perfumeecommerceapp.auth.entities.RegisterEntity;
+import org.blezant.perfumeecommerceapp.auth.repositories.AuthRepository;
 import org.blezant.perfumeecommerceapp.cart.entities.Cart;
 import org.blezant.perfumeecommerceapp.cart.entities.CartItem;
 import org.blezant.perfumeecommerceapp.cart.models.*;
@@ -11,11 +12,14 @@ import org.blezant.perfumeecommerceapp.cart.repositories.CartRepo;
 import org.blezant.perfumeecommerceapp.exceptions.CustomBadRequestException;
 import org.blezant.perfumeecommerceapp.product.entities.Perfumes;
 import org.blezant.perfumeecommerceapp.product.repositories.PerfumeRepository;
+import org.blezant.perfumeecommerceapp.product.services.ProductService;
 import org.blezant.perfumeecommerceapp.security.jwt.services.JwtService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,13 +31,16 @@ public class CartService {
     private final PerfumeRepository perfumeRepository;
     private final CartRepo cartRepo;
     private final CartItemRepo cartItemRepo;
+    private final AuthRepository authRepository;
+    private  final ProductService productService;
 
-
-    public CartService(JwtService jwtService, PerfumeRepository perfumeRepository, CartRepo cartRepo, CartItemRepo cartItemRepo) {
+    public CartService(JwtService jwtService, PerfumeRepository perfumeRepository, CartRepo cartRepo, CartItemRepo cartItemRepo, AuthRepository authRepository, ProductService productService) {
         this.jwtService = jwtService;
         this.perfumeRepository = perfumeRepository;
         this.cartRepo = cartRepo;
         this.cartItemRepo = cartItemRepo;
+        this.authRepository = authRepository;
+        this.productService = productService;
     }
 
     public PerfumeAddResponseDto addPerfumeToCart(HttpServletRequest httpServletRequest, PerfumeAddRequestDto requestObject) {
@@ -134,7 +141,7 @@ public class CartService {
         perfumeAddResponseDto.setMessage("Added to cart successfully");
 
 
-        //return respomse
+        //return response
         return perfumeAddResponseDto;
     }
 
@@ -208,5 +215,88 @@ public class CartService {
         deleteCartItemResponseDto.setMessage("Cart  Deleted Successfully");
         deleteCartItemResponseDto.setStatus(true);
         return  deleteCartItemResponseDto;
+    }
+
+    @Transactional
+    public PerfumeAddResponseDto incrementItemQuantity(HttpServletRequest httpServletRequest, ItemRequestDto requestDto, int quantity) {
+        //Extract user
+        String jwt= jwtService.extractJwtToken(httpServletRequest);
+        String userId= jwtService.extractUserId(jwt);
+
+
+        //validate cart and cart Items
+        Optional<Cart> cart= cartRepo.findById(requestDto.getCartId());
+        if(cart.isEmpty()){
+            throw new CustomBadRequestException("Invalid cart Id");
+        }
+        Optional<CartItem> cartItem=cartItemRepo.findById(requestDto.getCartItemId());
+        if(cartItem.isEmpty()){
+            throw new CustomBadRequestException("Invalid cart Id");
+        }
+
+        //validate user owns the cart and cart items
+        if(!(cart.get().getUserId().equals(userId)&&cartItem.get().getUserID().equals(userId))){
+            throw new CustomBadRequestException("Forbidden");
+        }
+
+
+        //validate quantity amount
+        Optional<Perfumes> perfumes= perfumeRepository.findById(cartItem.get().getPerfumes().getPid());
+        int databaseValue= perfumes.get().getQuantities().intValue();
+        if(!(quantity<=databaseValue)){
+            throw new CustomBadRequestException("Out of Stock");
+        }
+        Long longValue= (long) quantity;
+        perfumeRepository.updateQuantityRecord(longValue,cartItem.get().getPerfumes().getPid());
+        cartItemRepo.updateStock(quantity, requestDto.getCartItemId());
+        PerfumeAddResponseDto perfumeAddResponseDto= new PerfumeAddResponseDto();
+        perfumeAddResponseDto.setMessage("Item successfully incremented");
+        perfumeAddResponseDto.setStatus(true);
+        perfumeAddResponseDto.setPerfumeId(cartItem.get().getPerfumes().getPid());
+        return  perfumeAddResponseDto;
+    }
+
+    public GetCartResponseDto getCart( GetCartRequestDto requestDto) {
+       // verify userId is correct
+        String userId= requestDto.getUserId();
+        Optional<RegisterEntity> registerEntity= authRepository.findById(userId);
+        if(registerEntity.isEmpty()){
+            throw new CustomBadRequestException("Invalid userId");
+        }
+        //check if user has any cart
+        Optional<Cart> cart= cartRepo.findByUserId(userId);
+        if(cart.isEmpty()){
+            throw new CustomBadRequestException("Empty cart");
+        }
+        //Build cart Item object
+        BigDecimal subTotal= new BigDecimal("0");
+        List<CartItem> cartItems= cart.get().getCartItem();
+        List<CartItemData> cartItemData= new ArrayList<>();
+        for(int i=0;i<cartItems.size();i++){
+            Perfumes perfumes= cartItems.get(i).getPerfumes();
+            CartItem cartItem= cartItems.get(i);
+            CartItemData cartItemData1= new CartItemData();
+            cartItemData1.setName(perfumes.getName());
+            cartItemData1.setCategory(perfumes.getCategory());
+            cartItemData1.setCartItemId(cartItem.getCartItemId());
+            cartItemData1.setImageUrl(productService.getImageUrl(perfumes.getImageKey()));
+            BigInteger units= cartItem.getUnits();
+            BigDecimal price=cartItem.getPerfumes().getPrice();
+            BigDecimal itemTotalPrice=price.multiply(new BigDecimal(units));
+            cartItemData1.setUnits(units);
+            cartItemData1.setPrice(itemTotalPrice);
+            cartItemData.add(cartItemData1);
+            subTotal=subTotal.add(itemTotalPrice);
+        }
+        GetCartResponseDto responseDto=  new GetCartResponseDto();
+        responseDto.setSubTotal(subTotal);
+        responseDto.setCartId(cart.get().getCartId());
+        BigDecimal deliveryFee= new BigDecimal("1500");
+        responseDto.setDeliveryFee(deliveryFee);
+        responseDto.setTotal(deliveryFee.add(subTotal));
+        responseDto.setCartItemData(cartItemData);
+
+return  responseDto;
+
     }
 }

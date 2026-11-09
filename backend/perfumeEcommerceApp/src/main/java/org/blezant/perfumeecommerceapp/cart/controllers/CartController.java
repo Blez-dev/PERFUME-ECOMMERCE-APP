@@ -3,6 +3,7 @@ package org.blezant.perfumeecommerceapp.cart.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.blezant.perfumeecommerceapp.cart.models.*;
 import org.blezant.perfumeecommerceapp.cart.services.CartService;
 import org.springframework.http.HttpStatus;
@@ -39,5 +40,17 @@ public class CartController {
         return  ResponseEntity.status(HttpStatus.OK).body(responseData);
     }
 
+
+    @PostMapping("/cart-items/{quantity}")
+    public ResponseEntity<PerfumeAddResponseDto> incrementOrDecrementItem(  @Min (value = 1,message = "must be greater than 0")@PathVariable(value = "quantity") int quantity,HttpServletRequest httpServletRequest,@Valid @RequestBody ItemRequestDto requestDto){
+        PerfumeAddResponseDto responseData=cartService.incrementItemQuantity(httpServletRequest,requestDto,quantity);
+        return  ResponseEntity.status(HttpStatus.OK).body(responseData);
+    }
+
+    @GetMapping("/cart/items")
+    public ResponseEntity<?> getCart( @Valid @RequestBody GetCartRequestDto requestDto){
+        GetCartResponseDto responseData= cartService.getCart(requestDto);
+        return  ResponseEntity.status(HttpStatus.OK).body(responseData);
+    }
 
 }
