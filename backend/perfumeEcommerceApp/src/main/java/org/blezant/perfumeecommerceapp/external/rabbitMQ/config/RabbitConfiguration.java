@@ -29,6 +29,22 @@ public class RabbitConfiguration {
     }
 
 
+    //create config for payment setup
+    @Bean
+    public DirectExchange paymentMailExchange(){
+        return new DirectExchange("payment.mail.exchange");
+    }
+
+
+    @Bean
+    public Queue paymentMailQueue(){
+        return  new Queue("payment.mail.queue");
+    }
+
+    @Bean
+    public Binding paymentMailBinding(){
+        return  BindingBuilder.bind(paymentMailQueue()).to(paymentMailExchange()).with("payment.mail.key");
+    }
 
 
     //create bean for exchange

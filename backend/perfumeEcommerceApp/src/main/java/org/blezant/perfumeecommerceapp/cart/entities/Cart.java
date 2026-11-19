@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class Cart {
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
             @JoinColumn(name = "cart_cart_item")
     private List<CartItem> cartItem=new ArrayList<>();
     @Id

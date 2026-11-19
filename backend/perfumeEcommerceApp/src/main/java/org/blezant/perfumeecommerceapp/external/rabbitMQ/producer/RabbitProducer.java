@@ -6,6 +6,8 @@ import org.blezant.perfumeecommerceapp.auth.models.BrokerMailMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 public class RabbitProducer {
     private  final RabbitTemplate rabbitTemplate;
@@ -21,5 +23,9 @@ public class RabbitProducer {
 
     public void uploadImage(ImageUploadData imageUploadData){
         rabbitTemplate.convertAndSend(imageUploadData.getExchangeName(),imageUploadData.getRoutingKey(),imageUploadData);
+    }
+
+    public void sendPaymentMail(Map<String,String> data){
+        rabbitTemplate.convertAndSend(data.get("exchange"),data.get("key"),data.get("message"));
     }
 }

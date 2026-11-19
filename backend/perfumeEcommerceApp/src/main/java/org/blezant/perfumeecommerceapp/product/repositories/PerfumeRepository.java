@@ -30,4 +30,11 @@ public interface PerfumeRepository extends JpaRepository<Perfumes,String> {
     @Modifying
     @Transactional
     void updateQuantity(int itemUnits, String perfumeId);
+
+
+
+    @Modifying
+    @Transactional
+    @Query(value = "update perfumes set quantities=?2 where pid=?1",nativeQuery = true)
+    void update(String s, int i);
 }

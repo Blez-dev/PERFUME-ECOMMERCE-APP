@@ -57,7 +57,7 @@ public class SecurityConfiguration {
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/auth/register", "/auth/register/verify", "/auth/login","/refresh/token","/auth/forget-password/verify","/auth/forget-password","/auth/register/verify/admin","/auth/register/admin","/auth/login/admin").permitAll().anyRequest().authenticated())
+                        .requestMatchers("/auth/register", "/auth/register/verify", "/auth/login","/refresh/token","/auth/forget-password/verify","/auth/forget-password","/auth/register/verify/admin","/auth/register/admin","/auth/login/admin","/payment/webhook").permitAll().anyRequest().authenticated())
                 .build();
 
     }

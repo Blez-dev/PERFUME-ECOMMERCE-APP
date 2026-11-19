@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 
+import java.util.Map;
+
 @Service
 public class RabbitConsumer {
 
@@ -27,6 +29,25 @@ public class RabbitConsumer {
 
     public RabbitConsumer(S3Client s3Client) {
         this.s3Client = s3Client;
+    }
+
+
+    @RabbitListener(queues = "payment.mail.queue")
+    public  void sendPaymentMail(Map<String,String> data){
+        //create Resend Object
+        Resend resend= new Resend(resendApiKey);
+        CreateEmailOptions messageBody= CreateEmailOptions.builder()
+                .from("scentra-app@api.blezant.com").
+                to(data.get("email"))
+                .text(data.get("message"))
+                .subject("Payment Message")
+                .build();
+        try{
+           resend.emails().send(messageBody);
+        } catch (ResendException e) {
+            throw new CustomBadRequestException(e.getMessage());
+        }
+
     }
 
     @RabbitListener(queues = "image.queue")
