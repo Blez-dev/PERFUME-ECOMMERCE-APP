@@ -26,6 +26,6 @@ public class RabbitProducer {
     }
 
     public void sendPaymentMail(Map<String,String> data){
-        rabbitTemplate.convertAndSend(data.get("exchange"),data.get("key"),data.get("message"));
+        rabbitTemplate.convertAndSend(data.get("exchange"),data.get("key"),data);
     }
 }

@@ -21,7 +21,7 @@ public interface OrderRepo extends JpaRepository<Orders,String> {
 
 
     @Transactional
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "update orders set status=?1 where order_id=?2",nativeQuery = true)
     void updatePaymentStatus(String paid, String orderId);
 

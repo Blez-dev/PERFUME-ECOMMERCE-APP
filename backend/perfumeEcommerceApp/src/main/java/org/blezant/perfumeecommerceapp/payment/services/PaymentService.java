@@ -56,6 +56,8 @@ public class PaymentService {
 
         //Extract variables
         String jwtToken = jwtService.extractJwtToken(httpServletRequest);
+        String reference=null;
+        String authUrl=null;
         String userId = jwtService.extractUserId(jwtToken);
         String orderId = requestData.getOrderId();
         //Verify order Id
@@ -94,7 +96,9 @@ public class PaymentService {
                 throw new CustomBadRequestException("An error occurred with payment initialization");
             }
             //update order record
-            orderService.updateRecord(res.getData().getAuthorizationUrl(), res.getData().getReference(), requestData.getOrderId());
+            reference = res.getData().getReference();
+            authUrl   = res.getData().getAuthorizationUrl();
+            orderService.updateRecord(authUrl,reference, requestData.getOrderId());
             orders = orderService.getOrderById(orderId);
         }
 
@@ -193,7 +197,7 @@ public class PaymentService {
         Map<String, String> mailData = new HashMap<>();
         mailData.put("email", email);
         mailData.put("exchange", "payment.mail.exchange");
-        mailData.put("key", "payment.mail.queue");
+        mailData.put("key", "payment.mail.key");
         //check for event type
 
         //if payment fails
@@ -224,7 +228,7 @@ public class PaymentService {
         }
 
         //if payment is successful
-        if (paymentStatus.equals("transfer.success") || paymentStatus.equals("charge.sucess")) {
+        if (paymentStatus.equals("transfer.success") || paymentStatus.equals("charge.success")) {
             String message = """
                     Hello %s,
                     
