@@ -3,6 +3,10 @@ package org.blezant.perfumeecommerceapp.payment.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.blezant.perfumeecommerceapp.order.entities.OrderItem;
+import org.blezant.perfumeecommerceapp.order.entities.Orders;
+import org.blezant.perfumeecommerceapp.order.repositories.OrderItemRepo;
+import org.blezant.perfumeecommerceapp.order.repositories.OrderRepo;
 import org.blezant.perfumeecommerceapp.payment.models.PaymentRequestDto;
 import org.blezant.perfumeecommerceapp.payment.models.PaystackEventResponse;
 import org.blezant.perfumeecommerceapp.payment.models.PaystackResponseDto;
@@ -15,16 +19,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class PaymentController {
-    public PaymentController(PaymentService paymentService) {
+
+    private final OrderItemRepo orderItemRepo;
+    private  final OrderRepo orderRepo;
+    private final PaymentService paymentService;
+
+    public PaymentController(OrderItemRepo orderItemRepo, OrderRepo orderRepo, PaymentService paymentService) {
+        this.orderItemRepo = orderItemRepo;
+        this.orderRepo = orderRepo;
         this.paymentService = paymentService;
     }
 
-    private final PaymentService paymentService;
-
-
     @PostMapping("/payment/initialize")
     public ResponseEntity<PaystackResponseDto> initializePayment(@Valid @RequestBody PaymentRequestDto requestData, HttpServletRequest httpServletRequest) {
-        PaystackResponseDto paystackResponseDto = paymentService.initializePayment(requestData, httpServletRequest);
+
+
+        PaystackResponseDto paystackResponseDto = paymentService.initializePay(requestData, httpServletRequest);
         return ResponseEntity.status(HttpStatus.OK).body(paystackResponseDto);
     }
 

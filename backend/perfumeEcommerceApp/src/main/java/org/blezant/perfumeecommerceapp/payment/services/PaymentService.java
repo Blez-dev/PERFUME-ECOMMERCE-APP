@@ -52,6 +52,63 @@ public class PaymentService {
 
 
 
+
+    public PaystackResponseDto initializePay(PaymentRequestDto requestData, HttpServletRequest httpServletRequest){
+        //Extract variables
+        String jwtToken = jwtService.extractJwtToken(httpServletRequest);
+        String reference=null;
+        String authUrl=null;
+        String userId = jwtService.extractUserId(jwtToken);
+        String orderId = requestData.getOrderId();
+        //Verify order Id
+        Optional<Orders> orders = orderService.getOrderById(orderId);
+        if (orders.isEmpty()) {
+            throw new CustomBadRequestException("Invalid Order Id");
+        }
+        //verify user ownership
+        boolean isOwner = orders.get().getRegisterEntity().getUserId().equals(userId);
+        if (!isOwner) {
+            throw new CustomBadRequestException("invalid request");
+        }
+
+        //create response object
+        PaystackResponseDto res = new PaystackResponseDto();
+        //Build request Data
+        Map<String, Object> data = new HashMap<>();
+        data.put("email", orders.get().getRegisterEntity().getEmail());
+        BigDecimal amount = orders.get().getTotalPrice().multiply(new BigDecimal("100"));
+        data.put("amount", amount.toString());
+
+        //Initialize payment
+        res = restClient
+                .post()
+                .uri("transaction/initialize")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + paystackTestKey)
+                .body(data)
+                .retrieve()
+                .body(PaystackResponseDto.class);
+
+        if (res == null || !res.isStatus()) {
+            throw new CustomBadRequestException("An error occurred with payment initialization");
+        }
+        //update order record
+        reference = res.getData().getReference();
+        authUrl   = res.getData().getAuthorizationUrl();
+        orderService.updateRecord(authUrl,reference, requestData.getOrderId());
+        orders = orderService.getOrderById(orderId);
+        //if any state
+        res.setStatus(true);
+        res.setMessage("Authorization Url");
+        PaymentData paymentData = new PaymentData();
+        paymentData.setReference(reference);
+        paymentData.setAuthorizationUrl(authUrl);
+        res.setData(paymentData);
+
+        return res;
+
+    }
+
     public PaystackResponseDto initializePayment(PaymentRequestDto requestData, HttpServletRequest httpServletRequest) {
 
         //Extract variables
@@ -102,10 +159,13 @@ public class PaymentService {
             orders = orderService.getOrderById(orderId);
         }
 
+        //make a new call to fetch order
+        Orders newOrderObject = orderService.getOrderById(orderId).get();
+
         //verify if payment is successful
         VerifyPaymentDto verifyPaymentDto = restClient
                 .get()
-                .uri("/transaction/verify/" + orders.get().getReference())
+                .uri("/transaction/verify/" + newOrderObject.getReference())
                 .accept(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + paystackTestKey)
                 .retrieve().body(VerifyPaymentDto.class);
@@ -173,11 +233,11 @@ public class PaymentService {
     }
 
 
-    public void updatePaymentStatus(String paid, String orderId) {
-        orderRepo.updatePaymentStatus(paid, orderId);
-    }
 
 
+
+
+    @Transactional
     public void webhookUpdate(PaystackEventResponse requestData) {
         String referenceNumber = requestData.getData().getReference();
         //check for the referenceObject
@@ -229,6 +289,8 @@ public class PaymentService {
 
         //if payment is successful
         if (paymentStatus.equals("transfer.success") || paymentStatus.equals("charge.success")) {
+
+
             String message = """
                     Hello %s,
                     
@@ -248,10 +310,13 @@ public class PaymentService {
                     """.formatted(name, amount, orderId);
             //send message to broker
             mailData.put("message", message);
+
             rabbitProducer.sendPaymentMail(mailData);
+
+            orderRepo.updatePaymentStatus("PAID",orderId);
         }
 
-        //build response
+
 
 
     }
